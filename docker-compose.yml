@@ -1,0 +1,30 @@
+services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: docker/pocketbase.Dockerfile
+    container_name: current-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_PB_URL: ${VITE_PB_URL:-http://127.0.0.1:8090}
+    container_name: current-web
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      pocketbase:
+        condition: service_healthy

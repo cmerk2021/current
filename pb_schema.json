@@ -1,0 +1,325 @@
+[
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "fields": [
+      {
+        "id": "uf_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "presentable": false
+      },
+      {
+        "id": "uf_email",
+        "name": "email",
+        "type": "email",
+        "system": true,
+        "required": true,
+        "hidden": false,
+        "presentable": false,
+        "exceptDomains": null,
+        "onlyDomains": null
+      },
+      {
+        "id": "uf_emailVisibility",
+        "name": "emailVisibility",
+        "type": "bool",
+        "system": true,
+        "required": false,
+        "hidden": false,
+        "presentable": false
+      },
+      {
+        "id": "uf_verified",
+        "name": "verified",
+        "type": "bool",
+        "system": true,
+        "required": false,
+        "hidden": false,
+        "presentable": false
+      },
+      {
+        "id": "uf_tokenKey",
+        "name": "tokenKey",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "hidden": true,
+        "presentable": false,
+        "min": 30,
+        "max": 60,
+        "pattern": "",
+        "autogeneratePattern": "[a-zA-Z0-9_]{50}"
+      },
+      {
+        "id": "uf_password",
+        "name": "password",
+        "type": "password",
+        "system": true,
+        "required": true,
+        "hidden": true,
+        "presentable": false,
+        "min": 8,
+        "max": 0,
+        "pattern": "",
+        "cost": 10
+      },
+      {
+        "id": "uf_name",
+        "name": "name",
+        "type": "text",
+        "required": false,
+        "hidden": false,
+        "presentable": true,
+        "min": 0,
+        "max": 100,
+        "pattern": ""
+      },
+      {
+        "id": "uf_avatar",
+        "name": "avatar",
+        "type": "file",
+        "required": false,
+        "hidden": false,
+        "presentable": false,
+        "maxSelect": 1,
+        "maxSize": 5242880,
+        "mimeTypes": ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+        "thumbs": ["100x100"],
+        "protected": false
+      },
+      {
+        "id": "uf_created",
+        "name": "created",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": false,
+        "hidden": false,
+        "presentable": false
+      },
+      {
+        "id": "uf_updated",
+        "name": "updated",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": true,
+        "hidden": false,
+        "presentable": false
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_users_email` ON `users` (`email`) WHERE `email` != ''",
+      "CREATE UNIQUE INDEX `idx_users_tokenKey` ON `users` (`tokenKey`)"
+    ],
+    "listRule": "id = @request.auth.id",
+    "viewRule": "id = @request.auth.id",
+    "createRule": "",
+    "updateRule": "id = @request.auth.id",
+    "deleteRule": "id = @request.auth.id",
+    "authRule": "",
+    "manageRule": null,
+    "oauth2": { "enabled": false, "mappedFields": { "id": "", "name": "name", "username": "", "avatarURL": "avatar" } },
+    "passwordAuth": { "enabled": true, "identityFields": ["email"] }
+  },
+  {
+    "id": "pbc_preferences",
+    "name": "preferences",
+    "type": "base",
+    "fields": [
+      { "id": "pf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "pf_user", "name": "user", "type": "relation", "required": true, "presentable": false, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "pf_complexity", "name": "complexity", "type": "select", "required": true, "maxSelect": 1, "values": ["simple", "balanced", "advanced"] },
+      { "id": "pf_theme", "name": "theme", "type": "select", "required": true, "maxSelect": 1, "values": ["system", "light", "dark"] },
+      { "id": "pf_accent", "name": "accent", "type": "select", "required": true, "maxSelect": 1, "values": ["indigo", "violet", "blue", "emerald", "amber", "rose", "slate"] },
+      { "id": "pf_density", "name": "density", "type": "select", "required": true, "maxSelect": 1, "values": ["compact", "comfortable", "spacious"] },
+      { "id": "pf_sidebar", "name": "sidebar", "type": "json", "required": false, "maxSize": 20000 },
+      { "id": "pf_widgets", "name": "widgets", "type": "json", "required": false, "maxSize": 50000 },
+      { "id": "pf_onboarded", "name": "onboarded", "type": "bool", "required": false },
+      { "id": "pf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "pf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_preferences_user` ON `preferences` (`user`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_areas",
+    "name": "areas",
+    "type": "base",
+    "fields": [
+      { "id": "af_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "af_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "af_name", "name": "name", "type": "text", "required": true, "presentable": true, "min": 1, "max": 80 },
+      { "id": "af_icon", "name": "icon", "type": "text", "max": 40 },
+      { "id": "af_color", "name": "color", "type": "text", "max": 20 },
+      { "id": "af_order", "name": "order", "type": "number", "onlyInt": true },
+      { "id": "af_archived", "name": "archived", "type": "bool" },
+      { "id": "af_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "af_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_areas_user` ON `areas` (`user`)",
+      "CREATE INDEX `idx_areas_user_order` ON `areas` (`user`, `order`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_projects",
+    "name": "projects",
+    "type": "base",
+    "fields": [
+      { "id": "prf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "prf_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "prf_area", "name": "area", "type": "relation", "required": false, "collectionId": "pbc_areas", "cascadeDelete": false, "maxSelect": 1 },
+      { "id": "prf_name", "name": "name", "type": "text", "required": true, "presentable": true, "min": 1, "max": 120 },
+      { "id": "prf_notes", "name": "notes", "type": "editor", "maxSize": 200000 },
+      { "id": "prf_icon", "name": "icon", "type": "text", "max": 40 },
+      { "id": "prf_color", "name": "color", "type": "text", "max": 20 },
+      { "id": "prf_status", "name": "status", "type": "select", "maxSelect": 1, "values": ["active", "on_hold", "completed", "archived"] },
+      { "id": "prf_order", "name": "order", "type": "number", "onlyInt": true },
+      { "id": "prf_due", "name": "due", "type": "date" },
+      { "id": "prf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "prf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_projects_user` ON `projects` (`user`)",
+      "CREATE INDEX `idx_projects_user_status` ON `projects` (`user`, `status`)",
+      "CREATE INDEX `idx_projects_user_area` ON `projects` (`user`, `area`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_lists",
+    "name": "lists",
+    "type": "base",
+    "fields": [
+      { "id": "lf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "lf_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "lf_project", "name": "project", "type": "relation", "required": false, "collectionId": "pbc_projects", "cascadeDelete": true, "maxSelect": 1 },
+      { "id": "lf_name", "name": "name", "type": "text", "required": true, "presentable": true, "min": 1, "max": 120 },
+      { "id": "lf_icon", "name": "icon", "type": "text", "max": 40 },
+      { "id": "lf_color", "name": "color", "type": "text", "max": 20 },
+      { "id": "lf_order", "name": "order", "type": "number", "onlyInt": true },
+      { "id": "lf_archived", "name": "archived", "type": "bool" },
+      { "id": "lf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "lf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_lists_user` ON `lists` (`user`)",
+      "CREATE INDEX `idx_lists_user_order` ON `lists` (`user`, `order`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_tags",
+    "name": "tags",
+    "type": "base",
+    "fields": [
+      { "id": "tf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "tf_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "tf_name", "name": "name", "type": "text", "required": true, "presentable": true, "min": 1, "max": 40 },
+      { "id": "tf_color", "name": "color", "type": "text", "max": 20 },
+      { "id": "tf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "tf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_tags_user_name` ON `tags` (`user`, `name`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_tasks",
+    "name": "tasks",
+    "type": "base",
+    "fields": [
+      { "id": "kf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "kf_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "kf_title", "name": "title", "type": "text", "required": true, "presentable": true, "min": 1, "max": 500 },
+      { "id": "kf_notes", "name": "notes", "type": "editor", "maxSize": 200000 },
+      { "id": "kf_done", "name": "done", "type": "bool" },
+      { "id": "kf_completed_at", "name": "completed_at", "type": "date" },
+      { "id": "kf_due", "name": "due", "type": "date" },
+      { "id": "kf_scheduled", "name": "scheduled", "type": "date" },
+      { "id": "kf_priority", "name": "priority", "type": "select", "maxSelect": 1, "values": ["none", "low", "medium", "high", "urgent"] },
+      { "id": "kf_list", "name": "list", "type": "relation", "collectionId": "pbc_lists", "cascadeDelete": false, "maxSelect": 1 },
+      { "id": "kf_project", "name": "project", "type": "relation", "collectionId": "pbc_projects", "cascadeDelete": false, "maxSelect": 1 },
+      { "id": "kf_parent", "name": "parent", "type": "relation", "collectionId": "pbc_tasks", "cascadeDelete": true, "maxSelect": 1 },
+      { "id": "kf_tags", "name": "tags", "type": "relation", "collectionId": "pbc_tags", "cascadeDelete": false, "maxSelect": 20 },
+      { "id": "kf_order", "name": "order", "type": "number", "onlyInt": false },
+      { "id": "kf_recurrence", "name": "recurrence", "type": "json", "maxSize": 5000 },
+      { "id": "kf_attachments", "name": "attachments", "type": "file", "maxSelect": 10, "maxSize": 10485760, "protected": false },
+      { "id": "kf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "kf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_tasks_user` ON `tasks` (`user`)",
+      "CREATE INDEX `idx_tasks_user_done` ON `tasks` (`user`, `done`)",
+      "CREATE INDEX `idx_tasks_user_due` ON `tasks` (`user`, `due`)",
+      "CREATE INDEX `idx_tasks_user_scheduled` ON `tasks` (`user`, `scheduled`)",
+      "CREATE INDEX `idx_tasks_user_list` ON `tasks` (`user`, `list`)",
+      "CREATE INDEX `idx_tasks_user_project` ON `tasks` (`user`, `project`)",
+      "CREATE INDEX `idx_tasks_parent` ON `tasks` (`parent`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "pbc_smart_filters",
+    "name": "smart_filters",
+    "type": "base",
+    "fields": [
+      { "id": "sf_id", "name": "id", "type": "text", "system": true, "primaryKey": true, "required": true, "min": 15, "max": 15, "pattern": "^[a-z0-9]+$", "autogeneratePattern": "[a-z0-9]{15}" },
+      { "id": "sf_user", "name": "user", "type": "relation", "required": true, "collectionId": "_pb_users_auth_", "cascadeDelete": true, "minSelect": 1, "maxSelect": 1 },
+      { "id": "sf_name", "name": "name", "type": "text", "required": true, "presentable": true, "min": 1, "max": 80 },
+      { "id": "sf_icon", "name": "icon", "type": "text", "max": 40 },
+      { "id": "sf_query", "name": "query", "type": "json", "required": true, "maxSize": 10000 },
+      { "id": "sf_pinned", "name": "pinned", "type": "bool" },
+      { "id": "sf_created", "name": "created", "type": "autodate", "system": true, "onCreate": true, "onUpdate": false },
+      { "id": "sf_updated", "name": "updated", "type": "autodate", "system": true, "onCreate": true, "onUpdate": true }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_smart_filters_user` ON `smart_filters` (`user`)"
+    ],
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id"
+  }
+]
