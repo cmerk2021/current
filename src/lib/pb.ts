@@ -4,7 +4,6 @@ const url = import.meta.env.VITE_PB_URL ?? "http://127.0.0.1:8090";
 
 export const pb = new PocketBase(url);
 
-// Disable automatic cancellation on every request — we want manual control via React Query keys.
 pb.autoCancellation(false);
 
 export type Id = string;
@@ -23,9 +22,56 @@ export interface UserRecord extends BaseRecord {
 }
 
 export type Complexity = "simple" | "balanced" | "advanced";
-export type Theme = "system" | "light" | "dark";
-export type Accent = "indigo" | "violet" | "blue" | "emerald" | "amber" | "rose" | "slate";
+export type Theme = "system" | "light" | "dark" | "amoled";
+export type Accent =
+  | "indigo"
+  | "violet"
+  | "blue"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "slate"
+  | "teal"
+  | "fuchsia"
+  | "orange"
+  | "lime";
 export type Density = "compact" | "comfortable" | "spacious";
+export type Radius = "none" | "small" | "medium" | "large" | "full";
+export type FontFamily = "system" | "inter" | "geist" | "mono" | "serif";
+export type FontSize = "small" | "medium" | "large";
+export type SidebarPosition = "left" | "right";
+export type WeekStart = 0 | 1 | 6;
+export type DefaultView = "today" | "inbox" | "upcoming" | "dashboard";
+
+export interface SidebarPrefs {
+  favorites: string[];
+  hidden: string[];
+  position?: SidebarPosition;
+  compact?: boolean;
+}
+
+export interface WidgetState {
+  id: string;
+  visible: boolean;
+  order: number;
+}
+
+export interface WidgetPrefs {
+  layout: WidgetState[];
+}
+
+export interface UIPrefs {
+  radius?: Radius;
+  fontFamily?: FontFamily;
+  fontSize?: FontSize;
+  weekStartsOn?: WeekStart;
+  reducedMotion?: boolean;
+  showCompleted?: boolean;
+  customAccent?: string | null;
+  confetti?: boolean;
+  defaultView?: DefaultView;
+  groupBy?: "none" | "priority" | "due" | "project" | "list";
+}
 
 export interface PreferencesRecord extends BaseRecord {
   user: Id;
@@ -35,16 +81,8 @@ export interface PreferencesRecord extends BaseRecord {
   density: Density;
   sidebar: SidebarPrefs | null;
   widgets: WidgetPrefs | null;
+  ui: UIPrefs | null;
   onboarded: boolean;
-}
-
-export interface SidebarPrefs {
-  favorites: Id[];
-  hidden: string[];
-}
-
-export interface WidgetPrefs {
-  layout: { id: string; visible: boolean; order: number }[];
 }
 
 export interface AreaRecord extends BaseRecord {
@@ -127,4 +165,5 @@ export interface SmartFilterQuery {
   due?: "today" | "tomorrow" | "this_week" | "overdue" | "any";
   project?: Id;
   list?: Id;
+  search?: string;
 }

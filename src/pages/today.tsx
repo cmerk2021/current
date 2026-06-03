@@ -5,17 +5,27 @@ import { useTasks } from "@/lib/queries";
 import { LoadingScreen } from "@/components/loading-screen";
 
 export function TodayPage() {
-  const today = useTasks({ due: "today", done: false });
+  // "Today" = anything due today-or-earlier OR explicitly scheduled for today.
+  // New tasks from this view get scheduled=today so they show up here without
+  // inheriting a fake due date.
+  const today = useTasks({ todayView: true, done: false });
   const overdue = useTasks({ due: "overdue" });
-  const completedToday = useTasks({ done: true });
+  const completed = useTasks({ done: true });
 
-  const completedFiltered = useMemo(() => {
+  const completedToday = useMemo(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    return (completedToday.data ?? []).filter(
+    return (completed.data ?? []).filter(
       (t) => t.completed_at && new Date(t.completed_at) >= start,
     );
-  }, [completedToday.data]);
+  }, [completed.data]);
+
+  // Overdue tasks are a subset of `todayView`; split them visually.
+  const overdueIds = useMemo(
+    () => new Set((overdue.data ?? []).map((t) => t.id)),
+    [overdue.data],
+  );
+  const todayBucket = (today.data ?? []).filter((t) => !overdueIds.has(t.id));
 
   if (today.isLoading) return <LoadingScreen />;
 
@@ -25,6 +35,9 @@ export function TodayPage() {
     day: "numeric",
   });
 
+  const scheduledNow = new Date();
+  scheduledNow.setHours(12, 0, 0, 0);
+
   return (
     <div className="space-y-6">
       <header>
@@ -32,7 +45,10 @@ export function TodayPage() {
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Today</h1>
       </header>
 
-      <QuickAdd defaults={{ due: new Date().toISOString() }} placeholder="What's on for today?" />
+      <QuickAdd
+        defaults={{ scheduled: scheduledNow.toISOString() }}
+        placeholder="What's on for today?"
+      />
 
       {overdue.data && overdue.data.length > 0 && (
         <section className="space-y-2">
@@ -45,17 +61,17 @@ export function TodayPage() {
 
       <section className="space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Due today
+          Today
         </h2>
-        <TaskList tasks={today.data ?? []} />
+        <TaskList tasks={todayBucket} />
       </section>
 
-      {completedFiltered.length > 0 && (
+      {completedToday.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Completed today
           </h2>
-          <TaskList tasks={completedFiltered} />
+          <TaskList tasks={completedToday} />
         </section>
       )}
     </div>

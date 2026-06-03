@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { CalendarDays, Flag, Plus } from "lucide-react";
+import { CalendarDays, Flag, Hash, Inbox, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useCreateTask } from "@/lib/queries";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCreateTask, useLists, useProjects, useTags } from "@/lib/queries";
 import type { Priority, TaskRecord } from "@/lib/pb";
 import { usePreferences } from "@/lib/preferences";
 import { featuresFor } from "@/lib/features";
@@ -28,9 +35,15 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
   const create = useCreateTask();
   const prefs = usePreferences();
   const features = featuresFor(prefs.data?.complexity ?? "balanced");
+  const lists = useLists();
+  const projects = useProjects();
+  const tags = useTags();
   const [title, setTitle] = useState("");
   const [due, setDue] = useState<string>("");
   const [priority, setPriority] = useState<Priority>("none");
+  const [listId, setListId] = useState<string | undefined>(defaults?.list);
+  const [projectId, setProjectId] = useState<string | undefined>(defaults?.project);
+  const [tagIds, setTagIds] = useState<string[]>(defaults?.tags ?? []);
 
   async function submit() {
     const t = title.trim();
@@ -39,7 +52,10 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
       await create.mutateAsync({
         title: t,
         priority,
-        due: due || undefined,
+        due: due ? new Date(due).toISOString() : undefined,
+        list: listId,
+        project: projectId,
+        tags: tagIds,
         ...defaults,
       });
       setTitle("");
@@ -51,7 +67,7 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
   }
 
   return (
-    <div className="surface flex items-center gap-1 p-1.5">
+    <div className="surface flex flex-wrap items-center gap-1 p-1.5">
       <div className="grid h-7 w-7 place-items-center text-muted-foreground">
         <Plus className="h-4 w-4" />
       </div>
@@ -60,17 +76,13 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         placeholder={placeholder}
-        className="h-7 border-0 px-0 shadow-none focus-visible:ring-0"
+        className="h-7 min-w-[120px] flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
       />
 
       {features.dueDates && (
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn("h-7 gap-1 text-xs", due && "text-foreground")}
-            >
+            <Button variant="ghost" size="sm" className={cn("h-7 gap-1 text-xs", due && "text-foreground")}>
               <CalendarDays className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{due ? formatShort(due) : "Date"}</span>
             </Button>
@@ -83,12 +95,7 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
               className="rounded-md border border-input bg-background px-2 py-1 text-sm"
             />
             {due && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={() => setDue("")}
-              >
+              <Button variant="ghost" size="sm" className="ml-2" onClick={() => setDue("")}>
                 Clear
               </Button>
             )}
@@ -119,6 +126,69 @@ export function QuickAdd({ defaults, placeholder = "Add a task…" }: QuickAddPr
                   <span className="capitalize">{p}</span>
                 </button>
               ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
+
+      {features.projects && !defaults?.project && projects.data && projects.data.length > 0 && (
+        <Select value={projectId ?? "__none"} onValueChange={(v) => setProjectId(v === "__none" ? undefined : v)}>
+          <SelectTrigger className="h-7 w-auto gap-1 border-0 px-2 text-xs shadow-none">
+            <Inbox className="h-3.5 w-3.5" />
+            <SelectValue placeholder="Project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">No project</SelectItem>
+            {projects.data.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {!defaults?.list && lists.data && lists.data.length > 0 && (
+        <Select value={listId ?? "__none"} onValueChange={(v) => setListId(v === "__none" ? undefined : v)}>
+          <SelectTrigger className="h-7 w-auto gap-1 border-0 px-2 text-xs shadow-none">
+            <Inbox className="h-3.5 w-3.5" />
+            <SelectValue placeholder="List" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">No list</SelectItem>
+            {lists.data.map((l) => (
+              <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {features.tags && tags.data && tags.data.length > 0 && !defaults?.tags && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+              <Hash className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{tagIds.length ? `${tagIds.length} tag` : "Tag"}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2">
+            <div className="space-y-1">
+              {tags.data.map((tg) => {
+                const on = tagIds.includes(tg.id);
+                return (
+                  <button
+                    key={tg.id}
+                    onClick={() =>
+                      setTagIds(on ? tagIds.filter((x) => x !== tg.id) : [...tagIds, tg.id])
+                    }
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-accent",
+                      on && "bg-accent",
+                    )}
+                    style={tg.color ? { color: tg.color } : undefined}
+                  >
+                    <Hash className="h-3 w-3" /> {tg.name}
+                  </button>
+                );
+              })}
             </div>
           </PopoverContent>
         </Popover>

@@ -24,6 +24,8 @@
     --input: 240 6% 90%;
     --ring: 238 76% 60%;
     --radius: 0.6rem;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-base: 14px;
   }
 
   .dark {
@@ -48,30 +50,73 @@
     --ring: 238 84% 67%;
   }
 
+  /* AMOLED — true black for OLED screens. Combined with `.dark`. */
+  .dark[data-theme="amoled"] {
+    --background: 0 0% 0%;
+    --card: 0 0% 3%;
+    --popover: 0 0% 3%;
+    --secondary: 0 0% 8%;
+    --muted: 0 0% 8%;
+    --accent: 0 0% 10%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+  }
+
   /* Accent palette overrides */
-  [data-accent="indigo"]  { --primary: 238 76% 60%; --ring: 238 76% 60%; }
-  [data-accent="violet"]  { --primary: 262 83% 62%; --ring: 262 83% 62%; }
-  [data-accent="blue"]    { --primary: 217 91% 60%; --ring: 217 91% 60%; }
-  [data-accent="emerald"] { --primary: 160 84% 39%; --ring: 160 84% 39%; }
-  [data-accent="amber"]   { --primary: 38 92% 50%;  --ring: 38 92% 50%; }
-  [data-accent="rose"]    { --primary: 346 77% 58%; --ring: 346 77% 58%; }
-  [data-accent="slate"]   { --primary: 215 25% 35%; --ring: 215 25% 35%; }
+  [data-accent="indigo"]   { --primary: 238 76% 60%; --ring: 238 76% 60%; }
+  [data-accent="violet"]   { --primary: 262 83% 62%; --ring: 262 83% 62%; }
+  [data-accent="blue"]     { --primary: 217 91% 60%; --ring: 217 91% 60%; }
+  [data-accent="emerald"]  { --primary: 160 84% 39%; --ring: 160 84% 39%; }
+  [data-accent="amber"]    { --primary: 38 92% 50%;  --ring: 38 92% 50%; }
+  [data-accent="rose"]     { --primary: 346 77% 58%; --ring: 346 77% 58%; }
+  [data-accent="slate"]    { --primary: 215 25% 35%; --ring: 215 25% 35%; }
+  [data-accent="teal"]     { --primary: 173 80% 40%; --ring: 173 80% 40%; }
+  [data-accent="fuchsia"]  { --primary: 292 84% 60%; --ring: 292 84% 60%; }
+  [data-accent="orange"]   { --primary: 24 95% 53%;  --ring: 24 95% 53%; }
+  [data-accent="lime"]     { --primary: 84 81% 44%;  --ring: 84 81% 44%; }
 
   /* Density */
   [data-density="compact"]     { --row-pad-y: 0.35rem; }
   [data-density="comfortable"] { --row-pad-y: 0.55rem; }
   [data-density="spacious"]    { --row-pad-y: 0.85rem; }
 
+  /* Radius */
+  [data-radius="none"]   { --radius: 0rem; }
+  [data-radius="small"]  { --radius: 0.35rem; }
+  [data-radius="medium"] { --radius: 0.6rem; }
+  [data-radius="large"]  { --radius: 0.9rem; }
+  [data-radius="full"]   { --radius: 1.25rem; }
+
+  /* Font family */
+  [data-font="system"] { --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  [data-font="inter"]  { --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif; }
+  [data-font="geist"]  { --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif; }
+  [data-font="serif"]  { --font-sans: ui-serif, Georgia, Cambria, "Times New Roman", serif; }
+  [data-font="mono"]   { --font-sans: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace; }
+
+  /* Font size */
+  [data-fontsize="small"]  { --font-base: 13px; }
+  [data-fontsize="medium"] { --font-base: 14px; }
+  [data-fontsize="large"]  { --font-base: 15.5px; }
+
+  /* Reduced motion override */
+  [data-motion="reduced"] *, [data-motion="reduced"] *::before, [data-motion="reduced"] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
   * { @apply border-border; }
   html, body, #root { height: 100%; }
+  html { font-size: var(--font-base); }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01", "ss03";
   }
 
   ::selection { background: hsl(var(--primary) / 0.25); }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 9999px; }
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
@@ -84,5 +129,8 @@
   .row-pad { padding-top: var(--row-pad-y, 0.55rem); padding-bottom: var(--row-pad-y, 0.55rem); }
   .focus-ring {
     @apply outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0;
+  }
+  .drop-target {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 }

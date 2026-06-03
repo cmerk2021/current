@@ -203,7 +203,12 @@ There is no Node server in production.
 │   ├── components/
 │   │   ├── ui/                 # shadcn-style primitives
 │   │   ├── layout/             # sidebar, topbar, app shell
-│   │   └── tasks/              # task list + quick add
+│   │   ├── tasks/              # task list, quick add, detail dialog
+│   │   ├── board.tsx           # kanban board (Balanced+)
+│   │   ├── calendar.tsx        # month view (Advanced)
+│   │   ├── dnd.tsx             # HTML5 drag-and-drop helper
+│   │   ├── command-palette.tsx
+│   │   └── loading-screen.tsx
 │   ├── lib/
 │   │   ├── pb.ts               # PocketBase client + types
 │   │   ├── auth.tsx            # auth context
@@ -236,7 +241,7 @@ PocketBase **v0.31.0** (modern `fields` collection format, `autodate` fields,
 | Collection       | Purpose                                                    |
 | ---------------- | ---------------------------------------------------------- |
 | `users`          | Auth collection. Email/password, OAuth-ready, avatar file. |
-| `preferences`    | One per user. Complexity, theme, accent, density, sidebar config, widget layout, onboarded flag. |
+| `preferences`    | One per user. Typed: complexity, theme, accent, density, onboarded. JSON: `sidebar` (favorites, hidden sections, position, compact), `widgets` (layout array), `ui` (radius, font family/size, week start, motion, default view, custom accent, show-completed, confetti, group-by). |
 | `areas`          | Groupings for projects (Advanced tier).                    |
 | `projects`       | Projects with optional area, status, due, color, icon, notes. |
 | `lists`          | Lightweight lists, optionally scoped to a project.         |
@@ -289,27 +294,53 @@ unique `(user, name)` index on `tags`.
 
 Every user gets:
 
-- **Theme** — System / Light / Dark
-- **Accent color** — Indigo / Violet / Blue / Emerald / Amber / Rose / Slate
+- **Theme** — System / Light / Dark / AMOLED (pure-black dark variant)
+- **Accent color** — eleven presets (Indigo / Violet / Blue / Teal / Emerald /
+  Lime / Amber / Orange / Rose / Fuchsia / Slate) **plus a custom hex picker**
 - **Density** — Compact / Comfortable / Spacious
-- **Sidebar customization** — favorites and hidden sections (stored as JSON)
-- **Widget layout** — visible widgets and their order (Advanced tier)
+- **Roundness** — None / Small / Medium / Large / Full (applies to every
+  rounded surface via a CSS variable)
+- **Typography** — Font family (System / Inter / Geist / Serif / Mono) and
+  base font size (Small / Medium / Large)
+- **Sidebar position** — Left or Right
+- **Sidebar customization** — favorite items (pinned to the top), per-section
+  visibility (favorites, lists, projects, areas, smart filters, tags),
+  compact mode
+- **Default view** — where the app lands on open (Today / Upcoming / Dashboard)
+- **Week starts on** — Sunday / Monday / Saturday (used by Calendar and
+  Upcoming)
+- **Show completed tasks** — toggle inline completed sections
+- **Reduce motion** — disables transitions and animations
+- **Confetti on complete** — small celebration toggle
+- **Widget layout** — visible widgets and their order (Advanced tier),
+  rearranged with drag-and-drop
+- **Reset to defaults** — restore every UI preference in one click
+- **JSON data export** — download a snapshot of all your collections from
+  Settings → Account
 
 Preferences live in the `preferences` collection, one row per user, created
-lazily on first load.
+lazily on first load. Typed columns hold `complexity / theme / accent /
+density / onboarded`; everything else lives in three JSON fields
+(`sidebar`, `widgets`, `ui`) merged client-side against sensible defaults
+so new keys never require a schema migration.
 
 ---
 
 ## 9. Onboarding
 
-When a new user signs up, they see exactly one screen: a complexity selector
-with three cards (Simple / Balanced / Advanced). Choosing one sets
-`preferences.complexity` and `preferences.onboarded = true`, then drops them
-into the Today view.
+When a new user signs up, they see a two-step onboarding flow:
+
+1. **Complexity** — three cards (Simple / Balanced / Advanced). Balanced is
+   pre-selected.
+2. **Personalize** — pick a theme (System / Light / Dark) and an accent color.
+
+Choosing _Get started_ writes `preferences.complexity / theme / accent`,
+flips `preferences.onboarded = true`, and drops the user into the view set
+as their default (Today by default).
 
 The onboarding flow:
 
-- Has a single decision point.
+- Has only two decisions, both skippable in spirit (defaults are sensible).
 - Surfaces the philosophy explicitly: _"Complexity is optional. You can
   always change this later."_
 - Pre-selects **Balanced** as the recommended starting point.
@@ -348,36 +379,81 @@ Detailed per-provider instructions live in [deployment.md](./deployment.md).
 
 ## 11. Roadmap
 
-Built today (v0.1):
+Built today (v0.2):
 
-- Tasks, lists, projects (data layer)
-- Today, Upcoming, List, Project, Search, Dashboard, Settings
-- Onboarding with complexity selection
-- Theme / accent / density personalization
-- Command palette with quick-add
-- PocketBase v0.31 schema
+**Data + infra**
+
+- Complete data layer for tasks, lists, projects, areas, tags, subtasks,
+  smart filters, recurrence, attachments
+- Per-user access rules and indexes for every common query path
+- PocketBase v0.31 schema (single import file)
 - Docker, Compose, Render, Railway, Vercel deploy targets
 - CI (lint + typecheck + build)
 
+**Always-present features**
+
+- Tasks, Lists, Today, Upcoming, Search
+- Command palette (⌘K / Ctrl+K) with quick-add, fuzzy task search, theme +
+  accent switching, and jump-to navigation
+- Due dates and scheduled dates
+- Two-step onboarding (complexity + personalize)
+- Full personalization surface (see §8)
+- JSON data export
+
+**Balanced tier**
+
+- Projects with status, optional area, notes, % complete
+- Priorities (None / Low / Medium / High / Urgent)
+- Rich notes on projects
+- Tags with manager page, color palette, per-tag view
+- Subtasks (inline add inside the task detail dialog)
+- Board view (kanban grouped by priority) on lists and projects with
+  drag-and-drop between columns
+- Customizable dashboard with seven built-in widgets (today, overdue,
+  progress, upcoming, by-priority, projects, streak)
+
+**Advanced tier**
+
+- Areas with project assignment and inline CRUD
+- Recurring tasks engine — on completion, the next instance is computed
+  client-side (daily / weekly with byweekday / monthly / yearly) and
+  inserted as a new task
+- Attachments (data layer + schema; UI surfaces them in the task detail
+  dialog)
+- Calendar month view honoring `weekStartsOn`, click-through to detail
+- Smart filters with builder UI (due range, priority set, tag, done state),
+  manager page, and per-filter results view
+- Widget system with show/hide + drag-reorder
+
+**Interaction**
+
+- Task detail dialog (notes, tags, subtasks, recurrence picker, schedule,
+  list/project pickers, delete)
+- HTML5 drag-and-drop reordering on task lists, board cards, and dashboard
+  widgets — no extra dependency
+- Inline list/project rename, delete, view toggle (list ↔ board)
+- Sidebar with collapsible sections, per-section visibility, favorites
+  (`kind:id`), inline new-list / new-project / new-area dialogs, sidebar
+  position (left/right)
+- Quick-add bar with inline pickers for project, list, priority, tags, due
+
 Near-term:
 
-- Board view for projects and lists
-- Calendar view
-- Subtasks UI (data already supported)
-- Tags UI (data already supported)
-- Recurring tasks engine (data already supported)
-- Smart filter editor (data already supported)
-- Drag-and-drop ordering
-
-Mid-term:
-
-- Widget system + customizable dashboard
-- Areas UI
+- Realtime sync via PocketBase SSE
 - Mobile installable PWA
 - iCal export
 - Native OAuth integrations (Google, GitHub)
-- Realtime sync via PocketBase SSE
 - Import from Todoist / Microsoft To Do
+- Bulk-edit selection mode on task lists
+
+Mid-term:
+
+- Full block editor for notes (currently a plain textarea, schema is `editor`)
+- Recurrence: end conditions (count / until), monthly-by-position rules
+- Multi-tag and multi-priority smart filter UI parity with the underlying
+  query engine
+- Per-list and per-project default views
+- Saved column layouts for the board view (custom groupings beyond priority)
 
 Long-term:
 
@@ -405,7 +481,8 @@ The following are stable contracts the website generator can rely on:
 - **Required Node version:** `>= 20`
 - **Brand colors (HSL):**
   - Primary (indigo): `238 76% 60%` (light) / `238 84% 67%` (dark)
-  - Accent palette: indigo, violet, blue, emerald, amber, rose, slate
+  - Accent palette: indigo, violet, blue, teal, emerald, lime, amber,
+    orange, rose, fuchsia, slate (plus user-supplied custom hex)
 - **Logo concept:** wave-of-current glyph, gradient indigo → sky-500. The
   in-app SVG lives in [`public/favicon.svg`](../public/favicon.svg).
 
